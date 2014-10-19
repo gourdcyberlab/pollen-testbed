@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Linux Networking-concepts HOWTO: Machine Names and IP Addresses</TITLE>
+ <LINK HREF="networking-concepts-HOWTO-6.html" REL=next>
+ <LINK HREF="networking-concepts-HOWTO-4.html" REL=previous>
+ <LINK HREF="networking-concepts-HOWTO.html#toc5" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="networking-concepts-HOWTO-6.html">Next</A>
+<A HREF="networking-concepts-HOWTO-4.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc5">Contents</A>
+<HR>
+<H2><A NAME="s5">5.</A> <A HREF="networking-concepts-HOWTO.html#toc5">Machine Names and IP Addresses</A></H2>
+
+<P>So every interface on every node has an IP address.  It was
+realized quite quickly that humans are pretty bad at remembering
+numbers, so it was decided (just like phone numbers) to have a
+directory of names.  But since we're using computers anyway, it's
+nicer to have the computer look up the names for us automatically.</P>
+<P>
+<A NAME="definition-DNS"></A> </P>
+<P>Hence we have the Domain Name System (DNS).  There are nodes with
+well known IP addresses which programs can ask to look up names, and
+return IP addresses.  Almost all programs you will use are capable of
+doing this, which is why you can put `www.linuxcare.com' into
+Netscape, instead of `167.216.245.249'.</P>
+<P>
+<A NAME="definition-name-server"></A> </P>
+<P>Of course, you need the IP address of at least one of these `name
+servers': usually these are kept in the `/etc/resolv.conf' file.</P>
+<P>
+<A NAME="definition-UDP"></A> 
+<A NAME="definition-user-datagram-protocol"></A> </P>
+<P>Since DNS queries and responses are fairly small (1 packet each),
+the TCP protocol is not usually used: it provides automatic
+retransmission, ordering and general reliability, but at a cost of
+sending extra packets through the network.  Instead we use the very
+simple `User Datagram Protocol', which doesn't offer any of the fancy
+TCP features we don't need.</P>
+
+<HR>
+<A HREF="networking-concepts-HOWTO-6.html">Next</A>
+<A HREF="networking-concepts-HOWTO-4.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc5">Contents</A>
+</BODY>
+</HTML>

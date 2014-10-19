@@ -1,0 +1,1614 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Netfilter Extensions HOWTO: New netfilter matches</TITLE>
+ <LINK HREF="netfilter-extensions-HOWTO-4.html" REL=next>
+ <LINK HREF="netfilter-extensions-HOWTO-2.html" REL=previous>
+ <LINK HREF="netfilter-extensions-HOWTO.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="netfilter-extensions-HOWTO-4.html">Next</A>
+<A HREF="netfilter-extensions-HOWTO-2.html">Previous</A>
+<A HREF="netfilter-extensions-HOWTO.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="s3">3.</A> <A HREF="netfilter-extensions-HOWTO.html#toc3">New netfilter matches</A></H2>
+
+<P>In this section, we will attempt to explain the usage of new netfilter matches.
+The patches will appear in alphabetical order. Additionally, we will not explain
+patches that break other patches. But this might come later.</P>
+
+<P>Generally speaking, for matches, you can get the help hints from a particular
+module by typing :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -m the_match_you_want --help
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>This would display the normal iptables help message, plus the specific
+``the_match_you_want'' match help message at the end.</P>
+
+<H2><A NAME="ss3.1">3.1</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.1">ah-esp patch</A>
+</H2>
+
+<P>This patch by Yon Uriarte &lt;yon@astaro.de&gt; adds 2 new matches :</P>
+<P>
+<UL>
+<LI>``ah'' : lets you match an AH packet based on its Security Parameter Index (SPI).</LI>
+<LI>``esp'' : lets you match an ESP packet based on its SPI.</LI>
+</UL>
+</P>
+
+<P>This patch can be quite useful for people using IPSEC who are willing
+to discriminate connections based on their SPI.</P>
+
+<P>For example, we will drop all the AH packets that have a SPI equal to
+500 :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p 51 -m ah --ahspi 500 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       ipv6-auth--  anywhere             anywhere           ah spi:500
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the ah match are :</P>
+<P>
+<DL>
+<DT><B>--ahspi [!] spi[:spi]</B><DD>
+<P>-&gt; match spi (range)</P>
+</DL>
+</P>
+
+<P>The esp match works exactly the same :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p 50 -m esp --espspi 500 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       ipv6-crypt--  anywhere             anywhere           esp spi:500 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the esp match are :</P>
+<P>
+<DL>
+<DT><B>--espspi [!] spi[:spi]</B><DD>
+<P>-&gt; match spi (range)</P>
+</DL>
+</P>
+
+<P>Do not forget to specify the proper protocol through ``-p 50'' or ``-p 51'' (for esp &amp; ah respectively)
+when you use the ah or esp matches, or else the rule insertion will simply abort
+for obvious reasons.</P>
+
+<H2><A NAME="ss3.2">3.2</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.2">condition match</A>
+</H2>
+
+<P>This patch by Stephane Ouellette &lt;ouellettes@videotron.ca&gt; adds a new match that is used
+to enable or disable a set of rules using condition variables stored in `/proc' files.</P>
+
+<P>Notes:</P>
+<P>
+<UL>
+<LI>The condition variables are stored in the `/proc/net/ipt_condition/' directory.</LI>
+<LI>A condition variable can only be set to ``0'' (FALSE) or ``1'' (TRUE).</LI>
+<LI>One or many rules can be affected by the state of a single condition variable.</LI>
+<LI>A condition proc file is automatically created when a new condition is first referenced.</LI>
+<LI>A condition proc file is automatically deleted when the last reference to it is removed.</LI>
+</UL>
+</P>
+
+<P>Supported options for the condition match are :</P>
+<P>
+<DL>
+<DT><B>--condition [!] conditionfile</B><DD>
+<P>-&gt; match on condition variable.</P>
+</DL>
+</P>
+
+<P>For example, if you want to prohibit access to your web server while doing maintenance, you can use the
+following :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A FORWARD -p tcp -d 192.168.1.10 --dport http -m condition --condition webdown -j REJECT --reject-with tcp-reset
+
+# echo 1 &gt; /proc/net/ipt_condition/webdown
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The following rule will match only if the ``webdown'' condition is set to ``1''.</P>
+
+
+<H2><A NAME="ss3.3">3.3</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.3">conntrack patch</A>
+</H2>
+
+<P>This patch by Marc Boucher &lt;marc+nf@mbsi.ca&gt; adds a new general conntrack match module
+(a superset of the state match) that allows you to match on additional conntrack information.</P>
+
+<P>For example, if you want to allow all the RELATED connections for TCP protocols only,
+then you can proceed as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A FORWARD -m conntrack --ctstate RELATED --ctproto tcp -j ACCEPT
+
+# iptables --list
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     all  --  anywhere             anywhere           ctstate RELATED
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the conntrack match are :</P>
+<P>
+<DL>
+<DT><B>[!] --ctstate [INVALID|ESTABLISHED|NEW|RELATED|SNAT|DNAT][,...]</B><DD>
+<P>-&gt; State(s) to match. The "new" `SNAT' and `DNAT' states are virtual ones, matching if the original
+source address differs from the reply destination, or if the original destination differs from the reply source.</P>
+
+<DT><B>[!] --ctproto proto</B><DD>
+<P>-&gt; Protocol to match; by number or name, eg. `tcp'.</P>
+
+<DT><B>--ctorigsrc [!] address[/mask]</B><DD>
+<P>-&gt; Original source specification.</P>
+
+<DT><B>--ctorigdst [!] address[/mask]</B><DD>
+<P>-&gt; Original destination specification.</P>
+
+<DT><B>--ctreplsrc [!] address[/mask]</B><DD>
+<P>-&gt; Reply source specification.</P>
+
+<DT><B>--ctrepldst [!] address[/mask]</B><DD>
+<P>-&gt; Reply destination specification.</P>
+
+<DT><B>[!] --ctstatus [NONE|EXPECTED|SEEN_REPLY|ASSURED][,...]</B><DD>
+<P>-&gt; Status(es) to match.</P>
+
+<DT><B>[!] --ctexpire time[:time]</B><DD>
+<P>-&gt; Match remaining lifetime in seconds against
+value or range of values (inclusive).</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.4">3.4</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.4">fuzzy patch</A>
+</H2>
+
+<P>This patch by Hime Aguiar e Oliveira Jr. &lt;hime@engineer.com&gt; adds a new module
+which allows you to match packets according to a dynamic profile
+implemented by means of a simple Fuzzy Logic Controller (FLC).</P>
+
+<P>This match implements a TSK FLC (Takagi-Sugeno-Kang Fuzzy Logic
+Controller). The basic idea is that the match is given two parameters
+that tell it the desired filtering interval.</P>
+<P>
+<UL>
+<LI>When the packet rate is below `lower-limit' the rule will never match.</LI>
+<LI>Between `lower-limit' and `upper-limit', matching will occurs according a
+increasing (mean) rate.</LI>
+<LI>Finally, when the packet rate comes to `upper-limit',
+(mean) matching rate attains its maximum value, 99%.</LI>
+</UL>
+</P>
+
+<P>Taking into account that the sampling rate is variable and is of approximately 100ms
+(on a busy machine), the author believes that the module presents good responsiveness,
+adapting fast to changing traffic patterns.</P>
+
+<P>For example, if you wish to avoid Denials Of Service, you could use the following rule:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -A INPUT -m fuzzy --lower-limit 100 --upper-limit 1000 -j REJECT 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>
+<UL>
+<LI>Below the 100 pps (packets per second) rate, the filter is inactive.</LI>
+<LI>Between 100 and 1000 pps the mean acceptance rate drops
+from 100% (when we are at 100 pps) to 1% (when we are at 1000 pps).</LI>
+<LI>Above 1000 pps the acceptance rate keeps constant at 1%.</LI>
+</UL>
+</P>
+
+<P>Supported options for the fuzzy patch are :</P>
+<P>
+<DL>
+<DT><B>--upper-limit n</B><DD>
+<P>-&gt; Desired upper bound for traffic rate matching.</P>
+<DT><B>--lower-limit n</B><DD>
+<P>-&gt; Lower bound over which the FLC starts to match.</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.5">3.5</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.5">iplimit patch</A>
+</H2>
+
+<P>This patch by Gerd Knorr &lt;kraxel@bytesex.org&gt; adds a new match that
+will allow you to restrict the number of parallel TCP connections
+from a particular host or network.</P>
+
+<P>For example, let's limit the number of parallel HTTP connections made by a single
+IP address to 4 :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p tcp --syn --dport http -m iplimit --iplimit-above 4 -j REJECT
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target   prot opt source    destination         
+REJECT   tcp  --  anywhere  anywhere     tcp dpt:http flags:SYN,RST,ACK/SYN #conn/32 > 4 reject-with icmp-port-unreachable
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Or you might want to limit the number of parallel connections made by a whole class A for example :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p tcp --syn --dport http -m iplimit --iplimit-mask 8 --iplimit-above 4 -j REJECT
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target   prot opt source    destination         
+REJECT   tcp  --  anywhere  anywhere     tcp dpt:http flags:SYN,RST,ACK/SYN #conn/8 > 4 reject-with icmp-port-unreachable
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the iplimit patch are :</P>
+<P>
+<DL>
+<DT><B>[!] --iplimit-above n</B><DD>
+<P>-&gt; match if the number of existing tcp connections is (not) above n</P>
+<DT><B>--iplimit-mask n</B><DD>
+<P>-&gt; group hosts using mask</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.6">3.6</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.6">ipv4options patch</A>
+</H2>
+
+<P>This patch by Fabrice MARIE &lt;fabrice@netfilter.org&gt; adds a news match
+that allows you to match packets based on the IP options they have set.</P>
+
+<P>For example, let's drop all packets that have the record-route or the timestamp
+IP option set :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m ipv4options --rr -j DROP
+# iptables -A INPUT -m ipv4options --ts -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       all  --  anywhere             anywhere            IPV4OPTS RR
+DROP       all  --  anywhere             anywhere            IPV4OPTS TS
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the ipv4options match are :</P>
+<P>
+<DL>
+<DT><B>--ssrr</B><DD>
+<P>-&gt; match strict source routing flag.</P>
+<DT><B>--lsrr</B><DD>
+<P>-&gt; match loose  source routing flag.</P>
+<DT><B>--no-srr</B><DD>
+<P>-&gt; match packets with no source routing.</P>
+<DT><B>[!] --rr</B><DD>
+<P>-&gt; match record route flag.</P>
+<DT><B>[!] --ts</B><DD>
+<P>-&gt; match timestamp flag.</P>
+<DT><B>[!] --ra</B><DD>
+<P>-&gt; match router-alert option.</P>
+<DT><B>[!] --any-opt</B><DD>
+<P>-&gt; Match a packet that has at least one IP option
+(or that has no IP option at all if ! is chosen).</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.7">3.7</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.7">length patch</A>
+</H2>
+
+<P>This patch by James Morris &lt;jmorris@intercode.com.au&gt; adds a new match
+that allows you to match a packet based on its length.</P>
+
+<P>For example, let's drop all the pings with a packet size greater than
+85 bytes :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p icmp --icmp-type echo-request -m length --length 86:0xffff -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       icmp --  anywhere             anywhere           icmp echo-request length 86:65535
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the length match are :</P>
+<P>
+<DL>
+<DT><B>[!] --length length[:length]</B><DD>
+<P>-&gt; Match packet length
+against value or range of values (inclusive)</P>
+</DL>
+</P>
+
+<P>Values of the range not present will be implied. The implied value for minimum
+is 0, and for maximum is 65535.</P>
+
+<H2><A NAME="ss3.8">3.8</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.8">mport patch</A>
+</H2>
+
+<P>This patch by Andreas Ferber &lt;af@devcon.net&gt; adds a new match that allows
+you to specify ports with a mix of port-ranges and single ports for UDP and TCP protocols.</P>
+
+<P>For example, if you want to block ftp, ssh, telnet and http in one line, you can :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p tcp -m mport --ports 20:23,80 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       tcp  --  anywhere             anywhere           mport ports ftp-data:telnet,http
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the mport match are :</P>
+<P>
+<DL>
+<DT><B>--source-ports port[,port:port,port...]</B><DD>
+<P>-&gt; match source port(s)</P>
+<DT><B>--sports port[,port:port,port...]</B><DD>
+<P>-&gt; match source port(s)</P>
+<DT><B>--destination-ports port[,port:port,port...]</B><DD>
+<P>-&gt; match destination port(s)</P>
+<DT><B>--dports port[,port:port,port...]</B><DD>
+<P>-&gt; match destination port(s)</P>
+<DT><B>--ports port[,port:port,port]</B><DD>
+<P>-&gt; match both source and destination port(s)</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.9">3.9</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.9">nth patch</A>
+</H2>
+
+<P>This patch by Fabrice MARIE &lt;fabrice@netfilter.org&gt; adds a new match that allows
+you to match a particular Nth packet received by the rule.</P>
+
+<P>For example, if you want to drop every 2 ping packets, you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p icmp --icmp-type echo-request -m nth --every 2 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       icmp --  anywhere             anywhere           icmp echo-request every 2th 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Extensions by Richard Wagner &lt;rwagner@cloudnet.com&gt; allows
+you to create an easy and quick method to produce load-balancing for both inbound and outbound
+connections.</P>
+
+<P>For example, if you want to balance the load to the 3 addresses 10.0.0.5, 10.0.0.6 and 10.0.0.7,
+then you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -t nat -A POSTROUTING -o eth0 -m nth --counter 7 --every 3 --packet 0 -j SNAT --to-source 10.0.0.5
+# iptables -t nat -A POSTROUTING -o eth0 -m nth --counter 7 --every 3 --packet 1 -j SNAT --to-source 10.0.0.6
+# iptables -t nat -A POSTROUTING -o eth0 -m nth --counter 7 --every 3 --packet 2 -j SNAT --to-source 10.0.0.7
+
+# iptables -t nat --list
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+SNAT       all  --  anywhere             anywhere           every 3th packet #0 to:10.0.0.5 
+SNAT       all  --  anywhere             anywhere           every 3th packet #1 to:10.0.0.6 
+SNAT       all  --  anywhere             anywhere           every 3th packet #2 to:10.0.0.7 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the nth match are :</P>
+<P>
+<DL>
+<DT><B>--every Nth</B><DD>
+<P>-&gt; Match every Nth packet.</P>
+<DT><B>[--counter]  num</B><DD>
+<P>-&gt; Use counter 0-15 (default:0).</P>
+<DT><B>[--start] num</B><DD>
+<P>-&gt; Initialize the counter at the number `num' instead of 0. Must be between 0 and (Nth-1).</P>
+<DT><B>[--packet] num</B><DD>
+<P>-&gt; Match on the `num' packet. Must be between 0 and Nth-1.
+If `--packet' is used for a counter, then there must be Nth number of --packet rules, covering all values between 0 and
+(Nth-1) inclusively.</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.10">3.10</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.10">pkttype patch</A>
+</H2>
+
+<P>This patch by Michal Ludvig &lt;michal@logix.cz&gt; adds a new match that allows
+you to match a packet based on its type : host/broadcast/multicast.</P>
+
+<P>If For example you want to silently drop all the broadcasted packets :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m pkttype --pkt-type broadcast -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+DROP       all  --  anywhere             anywhere           PKTTYPE = broadcast 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for this match are :</P>
+<P>
+<DL>
+<DT><B>--pkt-type [!] packettype</B><DD>
+<P>-&gt; match packet type where packet type is one of
+<DL>
+<DT><B>host</B><DD>
+<P>-&gt; to us</P>
+<DT><B>broadcast</B><DD>
+<P>-&gt; to all</P>
+<DT><B>multicast</B><DD>
+<P>-&gt; to group</P>
+</DL>
+</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.11">3.11</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.11">pool patch</A>
+</H2>
+
+<P>Patch by Patrick Schaaf &lt;bof@bof.de&gt;. Joakim Axelsson and Patrick are in the process
+of re-writing it, therefore they will replace this section with the actual
+explanations once its written. </P>
+
+<H2><A NAME="ss3.12">3.12</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.12">psd patch</A>
+</H2>
+
+<P>This patch by Dennis Koslowski &lt;dkoslowski@astaro.de&gt; adds a new match that will
+attempt to detect port scans.</P>
+
+<P>In its simplest form, psd match can be used as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m psd -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target  prot opt source    destination         
+DROP    all  --  anywhere  anywhere    psd weight-threshold: 21 delay-threshold: 300 lo-ports-weight: 3 hi-ports-weight: 1
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for psd match are :</P>
+<P>
+<DL>
+<DT><B>[--psd-weight-threshold threshold]</B><DD>
+<P>-&gt; Portscan detection weight threshold</P>
+<DT><B>[--psd-delay-threshold delay]</B><DD>
+<P>-&gt; Portscan detection delay threshold</P>
+<DT><B>[--psd-lo-ports-weight lo]</B><DD>
+<P>-&gt; Privileged ports weight</P>
+<DT><B>[--psd-hi-ports-weight hi]</B><DD>
+<P>-&gt; High ports weight</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.13">3.13</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.13">quota patch</A>
+</H2>
+
+<P>This patch by Sam Johnston &lt;samj@samj.net&gt; adds a new match that
+allows you to set quotas. When the quota is reached, the rule doesn't
+match any more.</P>
+
+<P>For example, if you want to limit put a quota of 50Megs on incoming http data
+you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p tcp --dport 80 -m quota --quota 52428800 -j ACCEPT
+# iptables -A INPUT -p tcp --dport 80 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     tcp  --  anywhere             anywhere           tcp dpt:http quota: 52428800 bytes
+DROP       tcp  --  anywhere             anywhere           tcp dpt:http 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for quota match are :</P>
+<P>
+<DL>
+<DT><B> --quota quota</B><DD>
+<P>-&gt; The quota you want to set.</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.14">3.14</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.14">random patch</A>
+</H2>
+
+<P>This patch by Fabrice MARIE &lt;fabrice@netfilter.org&gt; adds a new match that
+allows you to math a packet randomly based on given probability.</P>
+
+<P>For example, if you want to drop 50% of the pings randomly, you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -p icmp --icmp-type echo-request -m random --average 50 -j DROP
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source       destination         
+DROP       icmp --  anywhere     anywhere        icmp echo-request  random 50% 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for random match are :</P>
+<P>
+<DL>
+<DT><B>[--average percent]</B><DD>
+<P>-&gt; The probability in percentage of the match.
+If omitted, a probability of 50% percent is set. Percentage must be within : 1 &lt;= percent &lt;= 99.</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.15">3.15</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.15">realm patch</A>
+</H2>
+
+<P>This patch by Sampsa Ranta &lt;sampsa@netsonic.fi&gt; adds a new match that allows you
+to use realm key from routing as match criteria similar to the one found in the packet
+classifier.</P>
+
+<P>For example, to log all the outgoing packet with a realm of 10, you can do the following :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A OUTPUT -m realm --realm 10 -j LOG
+
+# iptables --list
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+LOG        all  --  anywhere             anywhere           REALM match 0xa LOG level warning
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the realm match are :</P>
+<P>
+<DL>
+<DT><B>--realm [!] value[/mask]</B><DD>
+<P>-&gt; Match realm</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.16">3.16</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.16">recent patch</A>
+</H2>
+
+<P>This patch by Stephen Frost &lt;sfrost@snowman.net&gt; adds a new match that allows you
+to dynamically create a list of IP addresses and then match against that list in a few
+different ways.</P>
+
+<P>For example, you can create a `badguy' list out of people attempting to connect to port 139
+on your firewall and then DROP all future packets from them without considering them.</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A FORWARD -m recent --name badguy --rcheck --seconds 60 -j DROP
+# iptables -A FORWARD -p tcp -i eth0 --dport 139 -m recent --name badguy --set -j DROP
+
+# iptables --list
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+DROP       all  --  anywhere             anywhere           recent: CHECK seconds: 60
+DROP       tcp  --  anywhere             anywhere           tcp dpt:netbios-ssn recent: SET
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the recent match are :</P>
+<P>
+<DL>
+<DT><B>--name name</B><DD>
+<P>-&gt; Specify the list to use for the commands.  If no name is given
+then 'DEFAULT' will be used.</P>
+
+<DT><B>[!] --set</B><DD>
+<P>-&gt; This will add the source address of the packet to the list.
+If the source address is already in the list, this will update the existing entry.  This will
+always return success or failure if `!' is passed in.</P>
+
+<DT><B>[!] --rcheck</B><DD>
+<P>-&gt; This will check if the source address of the packet is currently
+in the list and return true if it is, and false otherwise.  Opposite is returned if `!' is passed in.</P>
+
+<DT><B>[!] --update</B><DD>
+<P>-&gt; This will check if the source address of the packet is currently
+in the list.  If it is then that entry will be updated and the rule will return true.  If the source
+address is not in the list then the rule will return false.  Opposite is returned if `!' is passed in.</P>
+
+<DT><B>[!] --remove</B><DD>
+<P>-&gt; This will check if the source address of the packet is currently
+in the list and if so that address will be removed from the list and the rule will return true.
+If the address is not found, false is returned.  Opposite is returned if `!' is passed in.</P>
+
+<DT><B>[!] --seconds seconds</B><DD>
+<P>-&gt; This option must be used in conjunction with one of `rcheck' or
+`update'.  When used, this will narrow the match to only happen when the address is in the list and was seen
+within the last given number of seconds.  Opposite is returned if `!' is passed in.</P>
+
+<DT><B>[!] --hitcount hits</B><DD>
+<P>-&gt; This option must be used in conjunction with one of `rcheck' or
+`update'.  When used, this will narrow the match to only happen when the address is in the list and packets
+had been received greater than or equal to the given value.  This option may be used along with `seconds'
+to create an even narrower match requiring a certain number of hits within a specific time frame.
+Opposite returned if `!' passed in.</P>
+
+<DT><B>--rttl</B><DD>
+<P>-&gt; This option must be used in conjunction with one of `rcheck' or `update'.
+When used, this will narrow the match to only happen when the address is in the list and the TTL of
+the current packet matches that of the packet which hit the --set rule.  This may be useful if you have
+problems with people faking their source address in order to DoS you via this module by disallowing others
+access to your site by sending bogus packets to you.</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.17">3.17</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.17">record-rpc patch</A>
+</H2>
+
+<P>This patch by Marcelo Barbosa Lima &lt;marcelo.lima@dcc.unicamp.br&gt; adds a new match that allows
+you to match if the source of the packet has requested that port through the portmapper before,
+or it is a new GET request to the portmapper, allowing effective RPC filtering.</P>
+
+<P>To match RPC connection tracking information, simply do the following :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m record_rpc -j ACCEPT
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination 
+ACCEPT     all  --  anywhere             anywhere
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The record_rpc match does not take any option.</P>
+
+<P>Do not worry for the match information not printed,
+it's simply because the print() function of this match is empty :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+/* Prints out the union ipt_matchinfo. */
+static void
+print(const struct ipt_ip *ip,
+      const struct ipt_entry_match *match,
+      int numeric)
+{
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<H2><A NAME="ss3.18">3.18</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.18">string patch</A>
+</H2>
+
+<P>This patch by Emmanuel Roger &lt;winfield@freegates.be&gt; adds a new match that allows
+you to match a string anywhere in the packet.</P>
+
+<P>For example, to match packets containing the string ``badstring'' anywhere
+in the packet and queue them to a userland IDS, you could use :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m string --string 'badstring' -j QUEUE
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+QUEUE      all  --  anywhere             anywhere           STRING match badstring
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Please do use this match with caution. A lot of people want to use
+this match to stop worms, along with the DROP target. This is a major mistake.
+It would be defeated by any IDS evasion method.</P>
+
+<P>In a similar fashion, a lot of people have been using this match as a mean
+to stop particular functions in HTTP like POST or GET by dropping
+any HTTP packet containing the string POST. Please understand that this job
+is better done by a filtering proxy. Additionally, any HTML content with
+the word POST would get dropped with the former method.
+This match has been designed to be able to queue to userland interesting packets
+for better analysis, that's all. Dropping packet based on this would be defeated
+by any IDS evasion method.</P>
+
+<P>Supported options for the string match are :</P>
+<P>
+<DL>
+<DT><B>--string [!] string</B><DD>
+<P>-&gt; Match a string in a packet</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.19">3.19</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.19">time patch</A>
+</H2>
+
+<P>This patch by  Fabrice MARIE &lt;fabrice@netfilter.org&gt; adds a new match that allows
+you to match a packet based on its arrival or departure (for locally generated packets) timestamp.</P>
+
+<P>for example, to accept packets that have an arrival time from 8:00H to 18:00H from Monday
+to Friday you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m time --timestart 8:00 --timestop 18:00 --days Mon,Tue,Wed,Thu,Fri -j ACCEPT
+
+# iptables --list 
+Chain INPUT (policy ACCEPT)
+target     prot opt source           destination
+ACCEPT     all  --  anywhere         anywhere        TIME from 8:0 to 18:0 on Mon,Tue,Wed,Thu,Fri 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Supported options for the time match are :</P>
+<P>
+<DL>
+<DT><B>--timestart value</B><DD>
+<P>-&gt; minimum HH:MM</P>
+<DT><B>--timestop value</B><DD>
+<P>-&gt; maximum HH:MM</P>
+<DT><B>--days listofdays</B><DD>
+<P>-&gt; a list of days to apply, from (case sensitive)
+<UL>
+<LI>Mon</LI>
+<LI>Tue</LI>
+<LI>Wed</LI>
+<LI>Thu</LI>
+<LI>Fri</LI>
+<LI>Sat</LI>
+<LI>Sun</LI>
+</UL>
+</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.20">3.20</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.20">ttl patch</A>
+</H2>
+
+<P>This patch by Harald Welte &lt;laforge@gnumonks.org&gt; adds a new match that allows you
+to match a packet based on its TTL.</P>
+
+<P>For example if you want to log any packet that have a TTL less than 5, you can do as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# iptables -A INPUT -m ttl --ttl-lt 5 -j LOG
+
+# iptables --list
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+LOG        all  --  anywhere             anywhere           TTL match TTL &lt; 5 LOG level warning
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Options supported by the ttl match are :</P>
+<P>
+<DL>
+<DT><B>--ttl-eq value</B><DD>
+<P>-&gt; Match time to live value</P>
+<DT><B>--ttl-lt value</B><DD>
+<P>-&gt; Match TTL &lt; value</P>
+<DT><B>--ttl-gt value</B><DD>
+<P>-&gt; Match TTL &gt; value</P>
+</DL>
+</P>
+
+<H2><A NAME="ss3.21">3.21</A> <A HREF="netfilter-extensions-HOWTO.html#toc3.21">u32 patch</A>
+</H2>
+
+<P>Don Cohen was kind enough to write an iptables module that
+pulls any bytes you'd like out of the packet, does some manipulation,
+and sees if the result is in a particular range.  For example, I can
+grab the Fragmentation information out of the IP header, throw away
+everything except the More Fragments flag, and see if that flag is
+set.</P>
+
+<P>What I'll do is introduce the core concepts here, and put in
+hopefully enough annotated examples that you'll be able to write your
+own tests.</P>
+
+<P>I won't be focusing on what these fields are, or why
+you'd want to test them; there are lots of (warning - shameless plug for
+my employer ahead!) 
+<A HREF="http://www.sans.org/">resources</A> for
+doing that.  If you simply need a quick reference for the packet
+headers, see 
+<A HREF="http://www.sans.org/resources/tcpip.pdf">tcpip.pdf</A>.</P>
+
+<P>All byte positions in this article start counting at 0 as the
+first byte of the header.  For example, in the IP header, byte "0" holds
+the 4 bit "Version" and 4 bit "IP Header Length", byte "1" holds the
+"TOS" field, etc.</P>
+<P>
+<H3>Check the value of a 2 byte field</H3>
+
+<P>In it's simplest form, u32 grabs a block of 4 bytes starting
+at Start, applies a mask of Mask to it, and compares the result to
+Range.  Here's the syntax we'll use for our first examples:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "Start=Range"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>We'll generally pick a "Start" value that's 3 less than the
+last byte in which you're interested.  So, if you want bytes 4 and 5 of
+the IP header (the IP ID field), Start needs to be 5-3 = 2.  Mask strips
+out all the stuff you don't want; it's a bitmask that can be as large as
+0xFFFFFFFF.  To get to our target of bytes 4 or 5, we have to discard
+bytes 2 and 3.  Here's the mask we'll use:  0x0000FFFF .  We'll actually
+use the shorter, and equivalent, 0xFFFF instead.</P>
+
+<P>So, to test for IPID's from 2 to 256, the iptables
+command line is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "2&amp;0xFFFF=0x2:0x0100"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>To read this off from left to right: "Load the u32 module,
+and perform the following u32 tests on this packet; grab the 4 bytes
+starting with byte 2 (bytes 2 and 3 are the Total Length field, and
+bytes 4 and 5 are the IPID), apply a mask of 0x0000FFFF (which sets the
+first two bytes to all zeroes, leaving the last two bytes untouched),
+and see if that value - the IPID - falls between 2 and 256 inclusive; if
+so, return true, otherwise false."</P>
+
+<P>There is no standalone IPID check in iptables, but this is
+the equivalent of the "ip[2:2] &gt;= 2 and ip[2:2] &lt;= 256" tcpdump/bpf filter.</P>
+
+<P>I leave off actions in these examples, but you can add things
+like:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+-j LOG --log-prefix "ID-in-2-256 "
+-j DROP
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>or any other action.  You can also add other tests, as we'll
+do in a minute.</P>
+
+<P>Don offers this test to see if the total packet length
+is greater than or equal to 256.  The total length field is bytes 2 and
+3 of the IP header, so our starting position is 3-3 = 0.  Since we're
+pulling out two bytes again, the mask will be 0xFFFF here as well.  The
+final test is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "0&amp;0xFFFF=0x100:0xFFFF"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>This is the same as:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m length --length 256:65535
+        or the bpf filter
+"len >= 256"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>
+<H3>Check the value of a 1 byte field</H3>
+
+<P>Much the same, except we'll use a mask of 0x000000FF (or it's
+shorter equivalent 0xFF) to pull out a single byte from the 4 bytes u32
+initially hands us.  Let's say I want to test the TTL field for
+TTL's below 3 to find people tracerouting to us.  Yes, there's a ttl
+module, but let's see how this would be done in u32.</P>
+
+<P>I want to end up with byte 8 of the IP header, so my starting
+position is 8-3 = 5.  Here's the test:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "5&amp;0xFF=0:3"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Which is equivalent to:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m ttl --ttl-lt 4
+        or the bpf filter
+"ip[8] &lt;= 3"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>
+<H3>Looking at 4 bytes at once</H3>
+
+<P>To check a complete destination IP address, we'll
+inspect bytes 16-19.  Because we want all 4 bytes, we don't need a mask
+at all.  Let's see if the destination address is 224.0.0.1:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "16=0xE0000001"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>This is equivalent to:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -d 224.0.0.1/32
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>If we only want to look at the first three bytes (to check if
+a source address is part of a given class C network), we'll need to use
+a mask again.  The mask we'll use is 0xFFFFFF00 , which throws away the
+last octet.  Let's check if the source address (from bytes 12-15,
+although we'll ignore byte 15 with the mask) is in the class C network
+192.168.15.0 (0xC0A80F00):</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "12&amp;0xFFFFFF00=0xC0A80F00"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Which is the same as:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -s 192.168.15.0/24
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>
+<H3>Inspecting early bytes in the header </H3>
+
+<P>Obviously, if I want to look at the TOS field (byte 1 of the
+IP header), I can't start at byte 1-3 = -2.  What we'll do instead is
+start at byte 0, pull out the byte we want, and then move it down to the
+last position for easy testing.  This isn't the only way we could do
+this, but it helps demonstrate a technique we'll need in a minute.</P>
+
+<P>To pull out the TOS field, I first ask u32 to give me bytes
+0-3 by using an offset of 0.  Now, I pull out byte 1 (the second byte in
+that block) with a mask of 0x00FF0000 .  I need to shift the TOS value
+down to the far right position for easy comparison.  To do this, I use a
+technique called, unsurprisingly, "right shift".  The symbol for right
+shift is ">>"; this is followed by the number of bits right to move the
+data.  If you're unfamiliar with right shift, take a look at this
+<A HREF="http://www.harpercollege.edu/bus-ss/cis/166/mmckenzi/lect19/l19n.htm">tutorial from Harper College</A>.</P>
+
+
+
+<P>I want to move TOS two bytes  - or 16 bits - to the right. 
+This is done with ">>16".  Now that we have TOS in the correct position,
+we compare it to 0x08 (Maximize Throughput):</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "0&amp;0x00FF0000>>16=0x08"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+
+
+<P>which is the equivalent of:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m ttl --tos 8
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>
+<H3>Inspecting individual bits</H3>
+
+<P>I'd like to look at the "More Fragments" flag - a flag
+which has no existing test in iptables (-f matches 2nd and further
+fragments, I want to match all fragments except the last).  Byte 6
+contains this, so I'll start with offset 3 and throw away bytes 3-5. 
+Normally this would use a mask of 0x000000FF, but I also want to discard
+the other bits in that last byte.  The only bit I want to keep is the
+third from the top (0010 0000), so the mask I'll use is 0x00000020 . 
+Now I have two choices; move that bit down to the lowest position and
+compare, or leave it in its current position and compare.</P>
+
+<P>To move it down, we'll right shift 5 bits.  The final test
+is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "3&amp;0x20>>5=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>If I take the other approach of leaving the bit where it is,
+I need to be careful about the compare value on the right.  If that bit
+is turned on, the compare value needs to be 0x20 as well.</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "3&amp;0x20=0x20"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Both approaches return true if the More Fragments flag is
+turned on.</P>
+
+<P>
+<H3>Combining tests</H3>
+
+<P>If you want to inspect more than one aspect of a packet, use:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+&amp;&amp;
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>between each test.</P>
+
+<P>
+<H3>Moving on to the TCP header</H3>
+
+<P>This is a little tricky.  Let's say I'd like to look at bytes
+4-7 of the TCP header (the TCP sequence number).  Let's take the
+simple approach first, and then look at some ways to improve this.</P>
+
+<P>For our first version, let's assume that the IP header is 20
+bytes long - usually a good guess.  Our starting point is byte 4 of the
+tcp header that immediately follows the IP header.  Our simplistic test
+for whether the sequence number is 41 (hex 29) might look like this:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "24=0x29"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>For packets where the IP header length is 20, this will
+actually work, but there are a few problems.  Let's fix them one by
+one.</P>
+
+<P>First, we never check to see if the packet is even a TCP
+packet.  This is stored in byte 9 of the IP header, so we'll pull 4
+bytes starting at byte 6, drop 6-8, and check to see if it's 6.  The new 
+rule that first checks if this is a TCP packet at all and also checks
+that the Sequence Number is 41 is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "6&amp;0xFF=0x6 &amp;&amp; 24=0x29"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The second problem we've momentarily ignored is the IP header
+length.  True, it usually is 20 bytes long, but it can be longer,
+if IP options are used.</P>
+
+
+<P>Here are the steps.  We pull the IP header length (a nibble
+that shows how many 4 bytes words there are in the header, usually 5)
+out of the IP header.  We multiply it by 4 to get the number of bytes in
+the IP header.  We use this number to say how many bytes to jump to get
+to the beginning of the TCP header, and jump 4 more bytes to get to the
+Sequence number.</P>
+
+<P>To get the header length, we need the first byte:
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>24"
+</PRE>
+</CODE></BLOCKQUOTE>
+, but we need to only grab the lower nibble and we
+need to multiply that number by 4 to get the actual number of bytes in
+the header.  To do the multiply, we'll right shift 22 instead of 24. 
+With this shift, we'll need to use a mask of 0x3C instead of the 0x0F we
+would have used.  The expression so far is: 
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C"
+</PRE>
+</CODE></BLOCKQUOTE>
+. 
+On an IP header with no options, that expression returns 20; just what
+we'd expect.  Now we need to tell u32 to use that number and make
+a jump that many bytes into the packet, a step performed by the "@"
+operator.</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "6&amp;0xFF=0x6 &amp;&amp; 0>>22&amp;0x3C@4=0x29"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The "@" grabs the number we created on its left (20,
+normally) and jumps that many bytes forward (we can even do this more
+than once - see the TCP payload section below).  The 4 to its right
+tells u32 to grab bytes 4-7, but u32 knows to pull them relative to the
+20 bytes it skipped over.  This gives us the Sequence Number, even if
+the IP header grows because of options.  *phew*!</P>
+
+<P>The last quirk to handle is fragments.  When we were only
+working with the IP header, this wasn't an issue; IP is designed in such
+a way that the IP header itself can never be fragmented.  The TCP header
+and application payload technically might be, and if we're handed the
+second or further fragment, we might be looking not at the Sequence
+Number in bytes 4-7, but perhaps some other part of the TCP header, or
+more likely, some application layer data.</P>
+
+<P>What we'll do is check that this is the first fragment (or an
+unfragmented packet, the test won't care), so that we're sure we're
+looking at tcp header info.  To do this, we test the fragment offset in
+most (we discard the top three flag bits) of bytes 6 and 7 of the IP
+header to make sure the offset is 0.  The test is:
+<BLOCKQUOTE><CODE>
+<PRE>
+"4&amp;0x1FFF=0"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The final expression (check for TCP, check for unfragmented
+packet or first fragment, and jump over the IP header, checking that
+bytes 4-7 of the TCP header are equal to 41) is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "6&amp;0xFF=0x6 &amp;&amp; 4&amp;0x1FFF=0 &amp;&amp; 0>>22&amp;0x3C@4=0x29"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>If the packet is, in fact, fragmented, we have one more
+consideration; the fragment might be so small that the field we're
+testing might have been put in a future fragment!  In this one case,
+it's not an issue because every IP link should handle packets of at
+least 68 bytes; even if the IP header was at its maximum of 60 bytes,
+the first 8 bytes of the TCP header should be included in that first
+fragment.</P>
+
+<P>When we start testing for things further in to the packet,
+we'll have to depend on u32's ability to simply return false if we ever
+try to ask for a value that falls outside of the packet being
+inspected.</P>
+
+<P>
+<H3>Checking for values in the ICMP header</H3>
+
+<P>Let's look for ICMP Host Unreachable packets (ICMP, type 3, code 1). 
+Just as in the above example, we need to check for the Protocol field
+(Protocol 1 = ICMP this time) and that we're looking at a complete
+packet or at least the first fragment: 
+<BLOCKQUOTE><CODE>
+<PRE>
+"6&amp;0xFF=1 &amp;&amp;
+4&amp;0x1FFF=0"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>To check for the ICMP Type and Code, we skip over the IP
+header again (
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@..."
+</PRE>
+</CODE></BLOCKQUOTE>
+).  To grab the first two
+bytes, we'll start at offset 0 and just right shift 16 bits.  The final
+test is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "6&amp;0xFF=1 &amp;&amp; 4&amp;0x1FFF=0 &amp;&amp; 0>>22&amp;0x3C@0>>16=0x0301"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>
+<H3>Checking for values in the UDP payload</H3>
+
+<P>Lets try going all the way into the packet payload now, and
+match packets that are UDP DNS queries.  Here we're not only going to
+check for destination port 53, but we're also going to test the top bit
+of byte 2 of the payload; if set, this is a DNS query.</P>
+
+<P>We start by checking that this is a UDP packet:
+<BLOCKQUOTE><CODE>
+<PRE>
+"6&amp;0xFF=17"
+</PRE>
+</CODE></BLOCKQUOTE>
+.  We add the now familiar check for first
+fragment: 
+<BLOCKQUOTE><CODE>
+<PRE>
+"4&amp;0x1FFF=0"
+</PRE>
+</CODE></BLOCKQUOTE>
+.</P>
+
+<P>To test the destination port, we grab bytes 2 and 3 from the
+udp header (after jumping over the IP header as in the previous
+examples): 
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@0&amp;0xFFFF=53"
+</PRE>
+</CODE></BLOCKQUOTE>
+.</P>
+
+<P>If the packet has passed all of the above, we go back to
+check the payload (remember we have to jump over the variable-length IP
+and 8 byte UDP headers 
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@8 ..."
+</PRE>
+</CODE></BLOCKQUOTE>
+) to make sure
+this is a DNS query rather than a response.  To grab the high bit
+from byte 2, I'll use offset 8 to grab the first 4 payload bytes, right
+shift 15 bits to deposit the Query bit in the lowest position, and throw
+away all the rest of the bits with a mask of 0x01:
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@8>>15&amp;0x01=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>The final test is:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -m u32 --u32 "6&amp;0xFF=17 &amp;&amp; 4&amp;0x1FFF=0 &amp;&amp; 0>>22&amp;0x3C@0&amp;0xFFFF=53 &amp;&amp; 0>>22&amp;0x3C@8>>15&amp;0x01=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Ugh.  I've seen stellar noise that had less entropy  :-) 
+Note that we're doing the whole thing with u32 checks; we could pull out
+the "udp", "first/no fragment" and "port 53" checks into other modules,
+and end up with this slightly more readable version:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+iptables -p udp --dport 53 \! -f -m u32 --u32 "0>>22&amp;0x3C@8>>15&amp;0x01=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+
+
+
+<P>
+<H3>Tests</H3>
+
+<P>First, a recap of the above, then some additional tests.</P>
+<P>
+<DL>
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"2&amp;0xFFFF=0x2:0x0100"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Test for IPID's between 2 and 256
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"0&amp;0xFFFF=0x100:0xFFFF"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Check for packets with 256 or more bytes.
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"5&amp;0xFF=0:3"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Match packets with a TTL of 3 or less.
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"16=0xE0000001"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Destination IP address is 224.0.0.1
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"12&amp;0xFFFFFF00=0xC0A80F00"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Source IP is in the 192.168.15.X class C network.
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+0&amp;0x00FF0000>>16=0x08
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the TOS field 8 (Maximize Throughput)?
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"3&amp;0x20>>5=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the More Fragments flag set?
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"6&amp;0xFF=0x6"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the packet a TCP packet?
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"4&amp;0x1FFF=0"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the fragment offset 0?  (If so, this is either an unfragmented
+packet or the first fragment).
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@4=0x29"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the TCP Sequence number 41?  (This requires the previous two
+checks for TCP and First Fragment as well)
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@0>>16=0x0301"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Check for ICMP type=3 and code=1 (needs UDP and first fragment tests too)
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@0&amp;0xFFFF=53"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the UDP destination port 53?  (Check for udp and first/no
+fragment first)
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"0>>22&amp;0x3C@8>>15&amp;0x01=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Check that the UDP DNS Query bit is set (again, check for UDP,
+first/no fragment, and dest port 53 first).
+
+
+
+<P>And now, some new tests:</P>
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"6&amp;0xFF=1"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is this an ICMP packet?  (From Don Cohen's documentation)
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"6&amp;0xFF=17"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is this a UDP packet?
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"4&amp;0x3FFF=0"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the fragment offset 0 andMF cleared?  (If so, this is an
+unfragmented packet).
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+"4&amp;0x3FFF=1:0x3FFF"
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is the fragment offset greater than 0 orMF set?  (If so,
+this is a fragment).
+
+<DT><B></B><DD>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+0>>22&amp;0x3C@12>>26&amp;0x3C@-3&amp;0xFF=0:255
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+Is there any payload on this tcp packet (check for tcp and not
+fragmented first)?  This elegant test was contributed by Don Cohen as I
+fumbled for a way to look for payload on a SYN packet.  By simply
+testing to see if payload byte 0 has a value between 0 and 255, we get
+true if payload byte 0 exists (read: "if there is any payload at all"),
+and false if we've gone beyond the end of the packet (read: "if there is
+no payload").
+
+</DL>
+</P>
+
+<P>Don Cohen wrote the u32 module, and also wrote some (if
+you'll forgive me) somewhat cryptic documentation inside the source code
+for the module.  William Stearns wrote this text, which borrows some
+examples and concepts from Don's documentation.  Many thanks to Don for
+reviewing an early draft of this article.  Thanks also to Gary Kessler
+and SANS for making the TCP/IP pocket reference guide freely
+available.</P>
+
+
+
+</P>
+</P>
+</P>
+</P>
+</P>
+</P>
+</P>
+</P>
+</P>
+</P>
+<HR>
+<A HREF="netfilter-extensions-HOWTO-4.html">Next</A>
+<A HREF="netfilter-extensions-HOWTO-2.html">Previous</A>
+<A HREF="netfilter-extensions-HOWTO.html#toc3">Contents</A>
+</BODY>
+</HTML>

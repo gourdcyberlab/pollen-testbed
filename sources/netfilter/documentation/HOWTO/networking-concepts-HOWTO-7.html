@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Linux Networking-concepts HOWTO: Dialup Interfaces: PPP</TITLE>
+ <LINK HREF="networking-concepts-HOWTO-8.html" REL=next>
+ <LINK HREF="networking-concepts-HOWTO-6.html" REL=previous>
+ <LINK HREF="networking-concepts-HOWTO.html#toc7" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="networking-concepts-HOWTO-8.html">Next</A>
+<A HREF="networking-concepts-HOWTO-6.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc7">Contents</A>
+<HR>
+<H2><A NAME="s7">7.</A> <A HREF="networking-concepts-HOWTO.html#toc7">Dialup Interfaces: PPP</A></H2>
+
+<P>
+<A NAME="definition-PPP"></A> 
+<A NAME="definition-point-to-point-protocol"></A> 
+<A NAME="definition-ppp-daemon"></A> 
+When you dial your modem to an ISP, and it connects to their modem,
+the kernel doesn't just shove IP packets through it.  There is a
+protocol called `Point-to-Point Protocol', or `PPP', which is used to
+negotiate with the other end before any packets are allowed through.
+This is used by the ISP to identify who is dialed up: on your Linux
+box, a program called the `PPP daemon' handles your end of the
+negotiation.</P>
+<P>
+<A NAME="definition-dynamic-ip-address"></A> 
+<A NAME="definition-static-ip-address"></A> </P>
+<P>Because there are so many dialup users in the world, they usually
+don't have their own IP address: most ISPs will assign you one of
+theirs temporarily when you dial up (the PPP daemon will negotiate
+this).  This is often called a `dynamic IP address', as separate from
+a `static IP address' which is the normal case where you have your own
+address permanently.  Usually they are assigned by modem: the next
+time you dial up, you will probably get a different modem in the modem
+pool, and hence a different IP address.</P>
+
+<HR>
+<A HREF="networking-concepts-HOWTO-8.html">Next</A>
+<A HREF="networking-concepts-HOWTO-6.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc7">Contents</A>
+</BODY>
+</HTML>

@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Linux Networking-concepts HOWTO: What is the `Internet'?</TITLE>
+ <LINK HREF="networking-concepts-HOWTO-4.html" REL=next>
+ <LINK HREF="networking-concepts-HOWTO-2.html" REL=previous>
+ <LINK HREF="networking-concepts-HOWTO.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="networking-concepts-HOWTO-4.html">Next</A>
+<A HREF="networking-concepts-HOWTO-2.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="definition-internet"></A> <A NAME="s3">3.</A> <A HREF="networking-concepts-HOWTO.html#toc3">What is the `Internet'?</A></H2>
+
+<P>The Internet is a 
+<A HREF="networking-concepts-HOWTO-2.html#definition-WAN">WAN</A> which spans
+the entire globe: it is the largest computer network in existence.
+The phrase `internetworking' refers to connecting separate networks to
+build a larger one, hence `The Internet' is the connection of a whole
+pile of subnetworks.</P>
+
+<P>So now we look at the list above and ask ourselves: what is the
+Internet's size, physical details and protocols?</P>
+
+<P>The size is already established above: it's global.</P>
+
+<P>The physical details are varied however: each little sub-network is
+connected differently, with a different layout and physical nature.
+Attempts to map it in a useful way have generally met with abject
+failure.</P>
+
+<P>The protocols spoken by each link are also often different: all of
+the 
+<A HREF="networking-concepts-HOWTO-2.html#definition-link-level-protocol">link-level protocols</A> listed above are used, and many more.</P>
+
+<H2><A NAME="ss3.1">3.1</A> <A HREF="networking-concepts-HOWTO.html#toc3.1">How Does The Internet Work?</A>
+</H2>
+
+<P>The question then arises: how come every node on the Internet can
+talk to the others, if they all use different link-level protocols to
+talk to each other?</P>
+<P>
+<A NAME="definition-network-protocol"></A> </P>
+<P>The answer is fairly simple: we need another protocol which
+controls how stuff flows through the network.  The link-level protocol
+describes how to get from one node to another if they're connected
+directly: the `network protocol' tells us how to get from one point in
+the network to any other, going through other links if necessary.</P>
+<P>
+<A NAME="definition-internet-protocol"></A> 
+<A NAME="definition-IP"></A> 
+<A NAME="definition-IPv4"></A> 
+<A NAME="definition-IPv6"></A> </P>
+<P>For the Internet, the network protocol is the Internet Protocol
+(version 4), or `IP'.  It's not the only protocol out there (Apple's
+AppleTalk, Novell's IPX, Digital's DECNet and Microsoft's NetBEUI
+being others) but it's the most widely adopted.  There's a newer
+version of IP called IPv6, but it's still not common.</P>
+<P>
+<A NAME="definition-router"></A> </P>
+<P>So to send a message from one side of the globe to another, your
+computer writes a bit of Internet Protocol, sends it to your modem,
+which uses some modem link-level protocol to send it to the modem it's
+dialed up to, which is probably plugged into a terminal server
+(basically a big box of modems), which sends it to a node inside the
+ISP's network, which sends it out usually to a bigger node, which
+sends it to the next node... and so on.  A node which connects two or
+more networks is called a `router': it will have one 
+<A HREF="networking-concepts-HOWTO-2.html#definition-network-interface">interface</A> for each
+network.</P>
+<P>
+<A NAME="definition-protocol-stack"></A> </P>
+<P>We call this array of protocols a `protocol stack', usually drawn
+like so:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+ [ Application: Handles Porn ]           [ Application Layer: Serves Porn ]
+              |                                          ^
+              v                                          |
+[ TCP: Handles Retransmission ]          [ TCP: Handles Retransmission ]
+              |                                          ^
+              v                                          |
+    [ IP: Handles Routing ]                   [ IP: Handles Routing ]
+              |                                          ^
+              v                                          |
+[ Link: Handles A Single Hop ]           [ Link: Handles A Single Hop ]
+              |                                          |
+              +------------------------------------------+
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>
+<A NAME="definition-transmission-control-protocol"></A> 
+<A NAME="definition-TCP"></A> 
+So in the diagram, we see Netscape (the Application on top left)
+retrieving a web page from a web server (the Application on top
+right).  To do this it will use `Transmission Control Protocol' or
+`TCP': over 90% of the Internet traffic today is TCP, as it is used
+for Web and EMail.</P>
+
+<P>So Netscape makes the request for a TCP connection to the remote
+web server: this is handed to the TCP layer, which hands it to the IP
+layer, which figures out which direction it has to go in, hands it
+onto the appropriate link layer, which transmits it to the other end
+of the link.</P>
+
+<P>At the other end, the link layer hands it up to the IP layer, which
+sees it is destined for this host (if not, it might hand it down to a
+different link layer to go out to the next node), hands it up to the
+TCP layer, which hands it to the server.</P>
+
+<P>So we have the following breakdown:</P>
+<P>
+<OL>
+<LI> The application (Netscape, or the web server at the other end)
+decides who it wants to talk to, and what it wants to send).
+
+<A NAME="definition-packets"></A> </LI>
+<LI> The TCP layer sends special packets to start the conversation
+with the other end, and then packs the data into a TCP
+`packet': a packet is just a term for a chunk of data which
+passes through a network.  The TCP layer hands this packet to
+<A NAME="definition-retransmission"></A> 
+the IP layer: it then keeps sending it to the IP layer until
+the TCP layer at the other end replies to say that it has
+received it.  This is called `retransmission', and has a whole
+heap of complex rules which control when to retransmit, how
+long to wait, etc.  It also gives each packet a set of numbers,
+which mean that the other end can sort them into the right
+order.
+
+<A NAME="definition-routing"></A> </LI>
+<LI> The IP layer looks at the destination of the packet, and
+figures out the next node to send the packet to.  This simple
+act is called `routing', and ranges from really simple (if you
+only have one modem, and no other network interfaces, all
+packets should go out that interface) to extremely complex (if
+you have 15 major networks connected directly to you).</LI>
+</OL>
+</P>
+
+<HR>
+<A HREF="networking-concepts-HOWTO-4.html">Next</A>
+<A HREF="networking-concepts-HOWTO-2.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc3">Contents</A>
+</BODY>
+</HTML>

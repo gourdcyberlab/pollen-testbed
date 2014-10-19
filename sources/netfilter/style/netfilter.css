@@ -1,0 +1,329 @@
+/* This is the stylesheet of http://www.netfilter.org */
+
+body {
+    background-color: white;
+    background-image: url("bgfoot.png");
+    background-repeat: repeat-x;
+    background-position: bottom left;
+	color: black;
+	font-family: arial,helvetica,sans-serif;
+	margin: 0px;
+	padding: 0px;
+    padding-bottom: 420px;
+}
+
+a {
+	background: transparent;
+	color: #0080ff;
+	text-decoration: underline;
+}
+
+a:visited {
+	background: transparent;
+	color: #9999ff;
+	text-decoration: underline;
+}
+
+/* global table defining the layout of the whole page */
+table.layout {
+	clear: both;
+	margin: 0px;
+	border: none;
+	padding: 0px;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+/*
+img {
+  border: none;
+}
+
+img.map {
+  margin: 0px;
+  padding: 0px;
+}
+
+p.images img {
+  border: solid black 2px;
+}
+
+p.images {
+  text-align: center;
+}
+
+p {
+  margin: 1.33em 0px;
+  margin-left: 40px; 
+  margin-right: 40px;
+  text-align: justify;
+}
+
+li {
+  margin-left: 40px; 
+  margin-right: 40px;
+  text-align: justify;
+}
+
+*/
+
+/* title bar on top of the page */
+div.titlebar {
+	clear: both;
+	/*background: #99ccfc; */
+	color: black;
+    background-image: url("arrow.png");
+    background-color: white;
+    background-repeat: no-repeat;
+    background-position: center -80px;
+	font-weight: bold;
+	text-align: center;
+    border: none;
+	height: 250px;
+}
+
+img.titlebarleft {
+    margin-top: 80px;
+    margin-left: 40px;
+	float: left;
+	border: none;
+	vertical-align: middle;
+	background: transparent;
+}
+
+img.titlebarright {
+	float: right;
+	border: none;
+	vertical-align: middle;
+	background: transparent;
+}
+
+
+/* navigation menu on the left hand side */
+td.menu {
+	background: transparent;
+	color: black;
+	padding: 10px;
+	vertical-align: top;
+	white-space: nowrap;
+	font-family: Arial, Helvetica, sans-serif; 
+/*	font-size: 100%*/
+}
+
+/* toplevel navigation menu items */
+span.toplevel {
+	background: #00188c;
+	font-weight: bold; 
+	color: #fbfbfb;
+	width: 100%;
+	display: block;
+	margin-top: 1em;
+	padding: 0.2em;
+
+    background: -moz-linear-gradient(top,  #729fcf 0%, #00188c 20%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#729fcf), color-stop(20%,#00188c)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #729fcf 0%,#00188c 20%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #729fcf 0%,#00188c 20%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #729fcf 0%,#00188c 20%); /* IE10+ */
+    background: linear-gradient(top,  #729fcf 0%,#00188c 20%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#729fcf', endColorstr='#00188c',GradientType=0 ); /* IE6-9 */
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; 
+}
+span.toplevel a:link {
+	color: #ffffff;
+}
+span.toplevel a:visited {
+	color: #ffffff;
+}
+
+
+/* first level of indentation in navigation menu */
+span.shrink1 {
+	padding-left: 2em;
+	font-size: 80%;
+	display: block;
+}
+
+/* mouse pointer over link: use yellow background */
+.shrink1 a:hover {
+	color: #0080ff;
+	background: #ffd700;
+}
+
+/* second level of indentation in navigation menu */
+span.shrink2 {
+	padding-left: 4em;
+	font-size: 70%;
+	display: block;
+}
+
+/* mouse pointer over link: use yellow background */
+.shrink2 a:hover {
+	color: #0080ff;
+	background: #ffd700;
+}
+
+/* left footer (copyright notice) */
+span.footerleft {
+	float: left;
+	padding: 20px;
+}
+
+/* 'right' footer (author name) */
+span.footerright {
+	float: right;
+	padding: 20px;
+	font-style: italic;
+}
+
+div.linkbar {
+    position: absolute;
+    top: 0;
+    left: 40px;
+    padding-top: 15px;
+}
+
+div.linkbar a {
+    padding: 15px;
+    background-color: #00188c;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+div.linkbar a.selected {
+    padding: 20px;
+    background: #00188c; /* Old browsers */
+    background: -moz-linear-gradient(top,  #00188c 0%, #000000 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#00188c), color-stop(100%,#000000)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #00188c 0%,#000000 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #00188c 0%,#000000 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #00188c 0%,#000000 100%); /* IE10+ */
+    background: linear-gradient(top,  #00188c 0%,#000000 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00188c', endColorstr='#000000',GradientType=0 ); /* IE6-9 */
+
+    border-bottom: 10px solid #73d216;
+}
+
+div.sponsor {
+	clear: both;
+	background: #99ccff;
+	border-style: solid;
+	border-color: #003399;
+	border-width: 1px 0px 1px 0px;
+	text-align: center;
+}
+
+img.sponsor {
+	border: 0;
+}
+
+
+td {
+	padding: 5px 5px 0px 0px;
+}
+
+/* this is the 'main' frame of the layout table */
+td.main {
+	padding: 10px;
+	vertical-align: top;
+	width: 100%;
+
+
+    border-left: 3px solid #3465a4;
+}
+
+.webpage {
+    background-image: url("arrow.png");
+    background-color: white;
+    background-repeat: no-repeat;
+    background-position: center -330px;
+}
+
+/* page headlines */
+h1 {
+	background: #69bdfc;
+	color: white;
+    font-size: xx-large;
+    padding: 10px;
+    font-weight: normal;
+
+    background: #00188c; /* Old browsers */
+    background: -moz-linear-gradient(top,  #00188c 0%, #000000 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#00188c), color-stop(100%,#000000)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #00188c 0%,#000000 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #00188c 0%,#000000 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #00188c 0%,#000000 100%); /* IE10+ */
+    background: linear-gradient(top,  #00188c 0%,#000000 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00188c', endColorstr='#000000',GradientType=0 ); /* IE6-9 */
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; 
+}
+
+/* section title */
+h2.title { 
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 105%
+	font-style: normal; 
+	font-weight: bold; 
+	color: #003399; 
+	font-variant: normal; 
+    border-bottom: 2px solid #003399;
+}
+
+/* subsection title */
+h3.title {
+	font-weight: bold;
+	clear: both;
+	color: #3375EE; 
+	font-size: 105%;
+}
+
+
+/*
+td.map {
+  margin: 0px;
+  padding: 0px;
+}
+
+div.titlebar {
+  background-image: url("../images/developer-barbg.png");
+  background-repeat: repeat-x;
+  height: 100px;
+}
+
+div.informaltable.table {
+  border-collapse: collapse; 
+}
+
+img.titlebarleft {
+  float: left;
+}
+
+img.titlebarright {
+  float: right;
+}
+
+div.rss img {
+  border: none;
+  float: right;
+}
+*/
+
+@media print {
+
+div.navbar, div.linkbar, td.menu {
+	display: none
+}
+
+td.main {
+	padding-right: 0px;
+	padding-left: 0px;
+}
+
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Linux Networking-concepts HOWTO: Summary</TITLE>
+ <LINK HREF="networking-concepts-HOWTO-10.html" REL=next>
+ <LINK HREF="networking-concepts-HOWTO-8.html" REL=previous>
+ <LINK HREF="networking-concepts-HOWTO.html#toc9" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="networking-concepts-HOWTO-10.html">Next</A>
+<A HREF="networking-concepts-HOWTO-8.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc9">Contents</A>
+<HR>
+<H2><A NAME="s9">9.</A> <A HREF="networking-concepts-HOWTO.html#toc9">Summary</A></H2>
+
+<P>So the modern Internet uses IP packets to communicate, and most of
+these IP packets use TCP inside.  Special nodes called `routers'
+connect all the little networks together into larger networks, and
+pass these packets through to their destination.  Most normal machines
+are only attached to one network (ie. have only one interface), and so
+are not routers.</P>
+
+<P>Every interface has a unique IP address, which look like `1.2.3.4':
+interfaces in the same network will have related IP addresses, with
+the same start, the same way that phone connections in the same area
+have the same prefix.  These network addresses look like IP addresses,
+with a `/' to say how much of them is the prefix, eg `1.2.0.0/16'
+means the first two digits is the network address: each digit
+represents 8 bits.</P>
+
+<P>Machines are given names by the Domain Name Service: programs ask
+name servers to give them the IP address, given a name like
+`www.linuxcare.com'.  This IP address is then used as the destination
+IP address to talk to that node.</P>
+
+<P>Rusty is really bad at writing documentation, especially for
+beginners.</P>
+
+<P>Enjoy!</P>
+<P>Rusty.</P>
+
+<HR>
+<A HREF="networking-concepts-HOWTO-10.html">Next</A>
+<A HREF="networking-concepts-HOWTO-8.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc9">Contents</A>
+</BODY>
+</HTML>
