@@ -1,8 +1,12 @@
 #!/usr/bin/python
+from __future__ import print_function
 from optparse import OptionParser
 import sys
 import socket
 import select
+
+# found this on the internet. really wishing it came with comments. works
+# rather much like netcat does, so we're on the right track.
 
 class NetTool:
     def run(self):
@@ -10,7 +14,7 @@ class NetTool:
         self.connect_socket()
         self.forward_data()
 
-    def parse_options(self):
+    def parse_options(self): # {{{
         parser = OptionParser(usage="usage: %prog [options]")
 
         parser.add_option("-c", "--connect",
@@ -58,35 +62,40 @@ class NetTool:
         self.connect = options.connect
         self.hostname = options.hostname
         self.port = options.port
+        # }}}
 
-    def connect_socket(self):
+    def connect_socket(self): # {{{
         if(self.connect):
+            # initiate connection to remote host
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect( (self.hostname, self.port) )
         else:
+            # listen and wait for a connection
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,  1)
-            try:
-                server.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
-            except socket.error:
-                sys.stderr.write("Warning: unable to set TCP_NODELAY...")
-            server.bind(('localhost', self.port))
+            # try:
+            #     server.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
+            # except socket.error:
+            #     sys.stderr.write("[-] Warning: unable to set TCP_NODELAY...\n")
+            server.bind(('0.0.0.0', self.port))
             server.listen(1)
             self.socket, address = server.accept()
+        # }}}
 
-    def forward_data(self):
+    def forward_data(self): # {{{
         self.socket.setblocking(0)
         while(1):
             read_ready, write_ready, in_error = select.select([self.socket, sys.stdin], [], [self.socket, sys.stdin])
             try:
-                buffer = self.socket.recv(100)
-                while( buffer  != ''):
+                buf = self.socket.recv(100)
+                while(buf != ''):
                     sys.stdout.write(buffer)
                     sys.stdout.flush()
-                    buffer = self.socket.recv(100)
-                if(buffer == ''):
+                    buf = self.socket.recv(100)
+                if(buf == ''):
                     return
-            except socket.error:
+            except socket.error as e:
+                sys.stderr.write('[-] Error: {}\n'.format(e))
                 pass
             while(1):
                 r, w, e = select.select([sys.stdin],[],[],0)
@@ -97,7 +106,10 @@ class NetTool:
                     return;
                 if(self.socket.sendall(c) != None):
                     return
+        # }}}
 
 if __name__ == '__main__':
     tool = NetTool()
     tool.run()
+
+# vim: fdm=marker et sts=4
