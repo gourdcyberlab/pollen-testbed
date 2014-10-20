@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Netfilter Extensions HOWTO: Patch-O-Matic</TITLE>
+ <LINK HREF="netfilter-extensions-HOWTO-3.html" REL=next>
+ <LINK HREF="netfilter-extensions-HOWTO-1.html" REL=previous>
+ <LINK HREF="netfilter-extensions-HOWTO.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="netfilter-extensions-HOWTO-3.html">Next</A>
+<A HREF="netfilter-extensions-HOWTO-1.html">Previous</A>
+<A HREF="netfilter-extensions-HOWTO.html#toc2">Contents</A>
+<HR>
+<H2><A NAME="s2">2.</A> <A HREF="netfilter-extensions-HOWTO.html#toc2">Patch-O-Matic</A></H2>
+
+<H2><A NAME="ss2.1">2.1</A> <A HREF="netfilter-extensions-HOWTO.html#toc2.1">What is Patch-O-Matic ?</A>
+</H2>
+
+<P>Netfilter developers distribute a set of patches that they package
+so that it can be used by their `patch-o-matic-ng' (or `p-o-m') system.
+p-o-m is a script that guides you through the process of choosing/selecting
+the patches you want to apply, and automatically patch the kernel for you.</P>
+
+<P>First, you should get the latest SVN tree, to be sure that you are using the
+latest extensions. To do so, perform :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# mkdir netfilter_svn
+# cd netfilter_svn
+# svn co https://svn.netfilter.org/netfilter/trunk/iptables
+# svn co https://svn.netfilter.org/netfilter/trunk/patch-o-matic-ng
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>This will will check out the main iptables package and the whole patch-o-matic-ng repository:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# ls -l netfilter_svn/
+total 3
+drwxr-xr-x    9 root     root          864 Nov  7 14:48 iptables/
+drwxr-xr-x   13 root     root          488 Nov  7 14:54 patch-o-matic-ng/
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Make sure your kernel source is ready in `/usr/src/linux/'.
+If for whatever reason the kernel you want to patch is not
+in `/usr/src/linux/' then you can make the variable KERNEL_DIR
+point to the patch where your kernel is :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# export KERNEL_DIR=/the/path/linux
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Make sure the dependencies are made already. If unsure :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# cd /usr/src/linux/
+# make dep
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Then you can go back to the netfilter directory, in the `patch-o-matic/' directory.
+You can now invoke p-o-m.</P>
+
+<H2><A NAME="ss2.2">2.2</A> <A HREF="netfilter-extensions-HOWTO.html#toc2.2">Running Patch-O-Matic</A>
+</H2>
+
+<P>While in the `patch-o-matic-ng/' directory, let's run p-o-m :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# ./runme extra
+
+Welcome to Patch-o-matic ($Revision: 3822 $)!
+
+Kernel: 
+
+Each patch is a new feature: many have minimal impact, some do not.
+Almost every one has bugs, so don't apply what you don't need!
+-------------------------------------------------------
+Already applied: nf-log
+
+Testing... not applied
+The HOPLIMIT patch:
+   Author: Maciej Soltysiak &lt;solt@dns.toxicfilms.tv>
+   Status: Works for me.
+
+   This allows the user to set the IPv6 Hop Limit value on a packet or
+   to increment or decrement it by a given value.
+   
+   Example:
+   # ip6tables -t mangle -A OUTPUT -j HOPLIMIT --hl-inc 1
+   # ip6tables -t mangle -A INPUT -j HOPLIMIT --hl-eq 64
+   # ip6tables -t mangle -A OUTPUT -j HOPLIMIT --hl-dec 2
+-----------------------------------------------------------------
+Do you want to apply this patch [N/y/t/f/a/r/b/w/q/?] 
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>p-o-m will go through most of the patches. If they are already applied,
+you will see so on the `Already applied:' line. Otherwise it will prompt you
+to decide whether or not to patch it. </P>
+<P>
+<UL>
+<LI>Simply press enter if you do not want to apply it.</LI>
+<LI>Type `t' to test that the patch will apply cleanly.</LI>
+<LI>Type `y' to apply patch.</LI>
+<LI>Type `n' to skip this patch.</LI>
+<LI>Type `f' to apply patch even if test fails.</LI>
+<LI>Type `a' to restart patch-o-matic in apply mode.</LI>
+<LI>Type `r' to restart patch-o-matic in REVERSE mode.</LI>
+<LI>Type `b' to walk back one patch in the list.</LI>
+<LI>Type `w' to walk forward one patch in the list.</LI>
+<LI>Finally, type `q' to quit immediately.</LI>
+</UL>
+</P>
+
+<P>A rule of thumb is to read carefully the little explanation text of each patch
+before actually applying it. As there are currently a LOT of official patches for patch-o-matic
+(and probably more unofficial ones), it is not recommended to apply them all !
+You should really consider applying only the ones you need, even if it means recompiling
+netfilter when you need more patches later on.</P>
+
+<P>Patch-o-matic's `runme' is a nice Perl script. It optionally takes some command line arguments:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# ./runme --help
+Usage:
+    ./runme [--batch] [--reverse] [--exclude suite/patch-dir ]
+    suite|suite/patch-dir
+
+Options:
+    --batch batch mode, automatically applying patches.
+
+    --test  test mode, automatically test patches.
+
+    --check check mode, automatically checks if patches are alreay applied.
+            produces a logfile: rune.out-check
+
+    --reverse
+            back out the selected patches.
+
+    --exclude suite/patch-dir
+            excludes the named patch. can be used multiple times.
+
+    --help  print a help message
+
+    --man   print the whole manpage
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Each patch has its own directory within the main directory `patch-o-matic-ng'.
+Each patch is attached to a suite of patches. The three existing suites (as of the date
+of update of this HOWTO) are:
+<UL>
+<LI>pending</LI>
+<LI>base</LI>
+<LI>extra</LI>
+</UL>
+</P>
+
+<P>You can instruct p-o-m to show you only patches attached to a particular suite:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+./runme --batch pending
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>This command will show you and propose you to apply all the patches from pending suite.
+When you instruct `./runme' to apply patches from the `extra' patch repository it will first
+present you with the patches from the `pending', and `base' repositories.</P>
+
+<H2><A NAME="ss2.3">2.3</A> <A HREF="netfilter-extensions-HOWTO.html#toc2.3">So what's next ?</A>
+</H2>
+
+<P>Once you have applied all the patches you wished to apply, the next step is recompile
+your kernel and install it. This HOWTO will not explain how to do this. Instead, you
+can read the 
+<A HREF="http://en.tldp.org/HOWTO/Kernel-HOWTO.html">Linux Kernel HOWTO</A>.</P>
+
+<P>While configuring your kernel, you will see new options in
+``Networking Options -&gt; Netfilter Configuration''. Choose the options
+you need, recompile &amp; install your new kernel.</P>
+
+<P>Once your new kernel is installed, you can go ahead and compile and install the ``iptables''
+package, from the `iptables/' directory as follows :</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# make &amp;&amp; make install
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>That's it ! Your new shiny iptables package is installed ! Now it's time
+to use these brand new functionalities.</P>
+
+<HR>
+<A HREF="netfilter-extensions-HOWTO-3.html">Next</A>
+<A HREF="netfilter-extensions-HOWTO-1.html">Previous</A>
+<A HREF="netfilter-extensions-HOWTO.html#toc2">Contents</A>
+</BODY>
+</HTML>

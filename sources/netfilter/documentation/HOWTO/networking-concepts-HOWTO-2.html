@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.66">
+ <TITLE>Linux Networking-concepts HOWTO: What is a `computer network'?</TITLE>
+ <LINK HREF="networking-concepts-HOWTO-3.html" REL=next>
+ <LINK HREF="networking-concepts-HOWTO-1.html" REL=previous>
+ <LINK HREF="networking-concepts-HOWTO.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="networking-concepts-HOWTO-3.html">Next</A>
+<A HREF="networking-concepts-HOWTO-1.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc2">Contents</A>
+<HR>
+<H2><A NAME="definition-computer-network"></A> <A NAME="s2">2.</A> <A HREF="networking-concepts-HOWTO.html#toc2">What is a `computer network'?</A></H2>
+
+<P>
+<A NAME="definition-node"></A> 
+A computer network is just a set of stuff for nodes to talk to each
+other (by `nodes' I mean computers, printers, Coke machines and
+whatever else you want).  It doesn't really matter <B>how</B> they
+are connected: they could use fiber-optic cables or carrier pigeons.
+Obviously, some choices are better than others (especially if you have
+a cat).</P>
+<P>
+<A NAME="definition-sub-network"></A> </P>
+<P>Usually if you just connect two computers together, it's not called
+a network; you really need three or more to become a network.  This is
+a bit like the word `group': two people is just a couple of guys, but
+three can be an `group'.  Also, networks are often hooked together, to
+make bigger networks; each little network (usually called a
+`sub-network') can be part of a larger network.</P>
+<P>
+<A NAME="definition-network-link"></A> </P>
+<P>The actual connection between two computers is often called a
+`network link'.  If there's a bit of cable running out of the back of
+your machine to the other machines, that's your network link.</P>
+
+<P>There are four things which we usually care about when we talk
+about a computer network:</P>
+<P>
+<DL>
+<DT><B>Size</B><DD>
+<P>
+<A NAME="definition-LAN"></A> 
+If you simply connect your four computers at home together,
+you have what is called a LAN (Local Area Network).  If
+everything is within walking distance, it's usually called a
+LAN, however many machines are connected to it, and whatever
+you've built the network out of.</P>
+<P>
+<A NAME="definition-WAN"></A> </P>
+<P>The other end of the spectrum is a WAN (Wide Area Network).
+If you have one computer in Lahore, Pakistan, one in Birmingham,
+UK and one in Santiago, Chile, and you manage to connect them,
+it's a WAN.</P>
+
+<DT><B>Topology: The Shape</B><DD>
+<P>
+<A NAME="definition-topology"></A> 
+Draw a map of the network: lines are the</P>
+<P>
+<A HREF="#definition-network-link">network links</A>, and
+each node is a dot.  Maybe each line leads into a central node
+like a big star, meaning that everyone talks through one
+point (a 
+<A NAME="definition-star-topology"></A>  `star topology'):
+<BLOCKQUOTE><CODE>
+<PRE>
+    o   o   o
+     \_ | _/
+       \|/
+  o-----o-----o
+      _/|\_
+     /  |  \
+    o   o   o
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>Maybe everyone talks in a line, like so:
+<BLOCKQUOTE><CODE>
+<PRE>
+    o------o------o-------o--------o
+    |                              |
+    |                              |
+    |                              o
+    |                              |
+    o                              |
+                                   o
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>Or maybe you have three subnetworks connected through one node:
+<BLOCKQUOTE><CODE>
+<PRE>
+                o
+    o           |  o--o--o
+    |           |  |
+    o--o--o--o--o  o
+           \       |
+            o------o
+           /       |
+    o--o--o--o--o  o
+    |           |  |
+    o           |  o--o
+                o
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+<P>You'll see many topologies like these in real life, and
+many far more complicated.</P>
+
+<DT><B>Physical: What It's Made Of</B><DD>
+<P>
+<A NAME="definition-sneakernet"></A>  The second thing to care
+about is what you've built the network out of.  The cheapest
+is `sneakernet', where badly-dressed people carry floppy disks
+from one machine to the others.  Sneakernet is almost always a
+<A HREF="#definition-LAN">LAN</A>.  Floppies cost less than
+$1, and a solid pair of sneakers can be got for around $20.</P>
+
+<P>
+<A NAME="definition-modem"></A>  The most common system used to connect home networks
+to far bigger networks is called a
+`modem' (for MODulator/DEModulator), which turns a normal
+phone connection into a network link.  It turns the stuff the
+computer sends into sounds, and listens to sounds coming from
+the other end to turn them back into stuff for the computer.
+As you can imagine, this isn't very efficient, and phone lines
+weren't designed for this use, but it's popular because phone
+lines are so common and cheap: modems sell for less than $50,
+and phone lines usually cost a couple of hundred dollars a
+year.</P>
+
+<P>
+<A NAME="definition-ethernet"></A> 
+<A NAME="definition-UTP"></A> 
+<A NAME="definition-10base2"></A> 
+<A NAME="definition-10baseT"></A> 
+<A NAME="definition-100baseT"></A> 
+<A NAME="definition-coax"></A> 
+<A NAME="definition-gigabit-ethernet"></A> 
+<A NAME="definition-terminator"></A> 
+<A NAME="definition-hub"></A> 
+The most common way to connect machines into a LAN is to use
+Ethernet.  Ethernet comes in these main flavors (listed from
+oldest to newest): Thinwire/Coax/10base2, UTP (Unshielded
+Twisted Pair)/10baseT and UTP/100baseT.  Gigabit ethernet (the
+name 1000baseT is starting to get silly) is starting to be
+deployed, too.  10base2 wire is usually black coaxial cable,
+with twist-on T-pieces to connect them to things: everyone
+gets connected in a big line, with special `terminator' pieces
+on the two ends.  UTP is usually blue wire, with clear
+`click-in' phone-style connectors which plug into sockets to
+connect: each wire connects one node to a central `hub'.  The
+cable is a couple of dollars a meter, and the 10baseT/10base2
+cards (many cards have plugs for both) are hard to get brand new.
+100baseT cards, which can also speak 10baseT as well, are ten
+times faster, and about $30.</P>
+
+<P>
+<A NAME="definition-fiber"></A>  On the other end of the
+spectrum is Fiber; a continuous tiny glass filament wrapped in
+protective coating which can be used to run between
+continents.  Generally, fiber costs thousands.</P>
+
+<P>
+<A NAME="definition-network-interface"></A> We usually call
+each connection to a node a `network interface', or
+`interface' for short.  Linux gives these names like `eth0'
+for the first ethernet interface, and `fddi0' for the first
+fiber interface.  The `/sbin/ifconfig' command lists them.</P>
+
+<DT><B>Protocol: What It's Speaking</B><DD>
+<P>
+<A NAME="definition-protocol"></A> 
+The final thing to care about is the language the two are
+speaking.  When two 
+<A HREF="#definition-modem">modems</A>
+are talking to each other down a phone line, they need to
+agree what the different sounds mean, otherwise it simply
+won't work.  This convention is called a `protocol'.  As
+people discovered new ways of encoding what the computer says
+into smaller sounds, new protocols were invented; there are at
+least a dozen different modem protocols, and most modems will
+try a number of them until they find one the other end
+understands.</P>
+
+<P>Another example is the 
+<A HREF="#definition-100baseT">100baseT</A> network mentioned above: it uses the same
+physical 
+<A HREF="#definition-network-link">network links</A>
+(
+<A HREF="#definition-UTP">UTP</A>) as
+<A HREF="#definition-10baseT">10baseT</A> above, but talks
+ten times as fast.</P>
+<P>
+<A NAME="definition-link-level-protocol"></A> 
+<A NAME="definition-hop"></A> </P>
+<P>These two protocols are what are called `link-level'
+protocols; how stuff is handed over the individual network
+links, or `one hop'.  The word `protocol' also refers to other
+conventions which are followed, as we will see next.</P>
+</DL>
+</P>
+
+<HR>
+<A HREF="networking-concepts-HOWTO-3.html">Next</A>
+<A HREF="networking-concepts-HOWTO-1.html">Previous</A>
+<A HREF="networking-concepts-HOWTO.html#toc2">Contents</A>
+</BODY>
+</HTML>

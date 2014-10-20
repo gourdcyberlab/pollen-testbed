@@ -1,0 +1,138 @@
+# Pollination
+
+## Method
+
+- fairly certain we'll be tacking some info onto the end of the packet.
+  - need to keep it as small as possible.
+  - what precisely do we need to know?
+  - the packet needs to know about... all the hosts it's been to.
+  - we can't know about the hosts we're going to, I don't believe.
+- host just needs to know about previous host and next host
+  - (if has previous and next, respectively. duh)
+  - therefore packet can know about next host
+  - it should be made simple to grab the last host off the packet data
+- still want a way to store all that data in a mask
+  - not sure it's possible
+  - actually, pretty sure it's not.
+  - because of information theory and whatnot
+- we're going to have to do appending information at each step.
+
+---
+
+- we can do ...
+  - dude, this is dumb.
+  - this is going to be a stupid amount of overhead.
+- we can do either relative identification or absolute.
+  - if we ever end up with a node connected to all nodes in the network
+    (fully connected node?), then there are no benefits of doing relative
+- idea:
+  - 7 bits of relative identification
+  - single bit of 'continue to next byte' ?
+  - gives us the option to extend our address space if need be.
+  - we're not going to get a whole lot smaller than a byte anyways.
+
+So to summarize: the method is to reserve space for a hash/signature, (filled
+with 0s), append the relative address of ... no, we need to identify ourself
+somehow.
+
+- each node will have a mapping from its relative address to an adjacent node
+  to that node's relative address to itself. these can be managed at join time
+  for each node.
+
+Trying again: reserve zeroes of size(hash), append next node relative address
+of self, and relative address of next node. hash message && encrypt && replace
+zeroes. log signature and relative (absolute?) address of next node. send.
+
+At next node: check signature; hold signature; replace last node relative
+address of self with next node relative address of self; append relative
+address of next node; calculate new signature; log old signature, new
+signature, relative address of last, and relative address of next. send;
+
+At final node: check signature; log signature, relative address of last node;
+strip and present to application layer.
+
+cryptographic hash is undecided (public key would be nice, but probably slow),
+not sure if we're going to log signatures or not. would likely get large
+quickly. not sure if the trick with the relative/absolute/what-have-you
+addresses is useful or necessary.
+
+Still not 100% sure any of this is worth writing about.
+
+sitting here giving a really in-depth discussion about "relative addresses".
+which have nothing to do with fucking anything.
+
+---
+
+2014-05-28
+sitting here working out the specifics of all this. we can't go below ethernet
+level, going below IP level means that we have to modify the entire IP stack,
+going below TCP level means we have to
+
+2014-06-28
+it's a full month later. actually later, b/c it's 3 in the morning. what I'm
+writing up will be a layer on top of TCP, b/c we want its connection
+properties. not sure about the logistics, but I think we add a kernel module
+that says "whenever we get a TCP payload, first interpret/modify it with this code",
+and handle it all that way. we ought to be able to just drop that hook
+function in and let it go. in other news, `getfield` and `setfield` handle the
+top-level to-and-from bytecode operations. the default get/set invoke the
+`struct` module and the `i2m`/`m2i` functions. we'll need to overwrite all of
+those (emphasis on the get/set). I'm really not sure what to do with the
+`i2m`/`m2i` functions: there's really not a whole lot for them to be good for.
+As I was typing this, realized it could be a good idea to look at the
+FlagField, but that's going to be more involved w/ the `i2h`/`h2i` stuff. we
+might take another look at the list fields and the string fields to see
+how/what they handle, but I feel like this is kinda uncharted territory. but
+for now, sleeps.
+
+---
+
+2014-10-12
+the next quarterly report is due in 3 days. we've done literally nothing. I
+think the plan is to talk about in general what we've done so far, where we
+are now, what the next step will be, what the final result might look like,
+and how we might get there. things of that nature. a quick summary of what we
+have would be: an idea for a packet layer that keeps track of where it has
+been, python domain-specific language code describing that packet layer, and
+an idea of what a kernel module that keeps track of all this might look like.
+
+spent most of the day googling "linux", "kernel modules", and "network". it
+looks like what we're looking for is a kernel module that makes use of the
+network hooks provided by netfilter
+
+---
+
+2014-10-14
+clarification on the topic of the report: gourd reiterated that the main push
+of this year is to pick an algorithm. I came in talking about getting ready to
+dive into kernel-/network-module hacking and stuff about netfilter and he was
+all "lol, no."
+
+---
+
+2014-10-15
+god fucking damnit. we can't ride entirely on top of TCP, b/c then all we can
+see is connection endpoints. if we want to see intermediate hosts, I think we
+have to get below IP layer. I don't even know if that's possible in software.
+regardless, the entire point of pollen is to see intermediate hosts, right? or
+do we just want to see who's talking to who? that would simplify my work
+greatly. if all we want to do is watch data communication across a network, we
+can bump up our pollination a level and keep track of who talks to who at an
+application-to-application level. I like that idea. it sounds simpler. b/c
+otherwise our protocol needs to ride below the IP layer, and that just sounds
+like a fucking hassle. like the mother of all hassles. 
+
+unless we're worried about things like covert channels, riding on top of
+TCP/UDP is just fine, and it massively simplifies our job. I feel like we can
+ignore network specifics and just drop our header on data blobs before they
+get handed to network functions. that abstracts us away from dealing with
+packets and towards dealing with payloads. I feel like gourd wanted to be able
+to look at each packet, but I don't see how that could be possible. Either ...
+
+from what I can tell, we can either work between applications and the network
+functions, meaning we can only see the endpoints; or we create an extension to
+the IP layer and either hope that our data doesn't get chopped off on things we
+don't control like routers, or try to write firmware updates for them so that
+we can keep track of them.
+
+<!-- vim: set ts=2 sw=2 spell nolist tw=78 : -->
